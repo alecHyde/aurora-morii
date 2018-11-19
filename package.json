@@ -1,0 +1,27 @@
+{
+  "name": "aurora-morii",
+  "version": "1.0.0",
+  "description": "A small web-app to assist in forecasting the likelihood of viewing the aurora borealis or the aurora australis.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "next",
+    "build": "next build",
+    "start": "next start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alecHyde/aurora-morii.git"
+  },
+  "author": "Alec Hyde",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alecHyde/aurora-morii/issues"
+  },
+  "homepage": "https://github.com/alecHyde/aurora-morii#readme",
+  "dependencies": {
+    "next": "^7.0.2",
+    "react": "^16.6.3",
+    "react-dom": "^16.6.3"
+  }
+}
