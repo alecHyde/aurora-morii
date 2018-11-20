@@ -2,9 +2,10 @@ import config from '../../config';
 import fetch from 'isomorphic-unfetch';
 
 import ParseKpTextData from './parseKpTextData';
+import TrimWeatherData from './trimWeatherData';
+// import corsURL from './CORSProxy';
 
 const getKpForecast = async () => {
-  console.log('FETCHING getKpForecast');
   const kpTextData = await fetch('http://services.swpc.noaa.gov/text/3-day-forecast.txt')
     .then(res => res.text());
   const formattedKpData = await ParseKpTextData(kpTextData);
@@ -12,17 +13,15 @@ const getKpForecast = async () => {
 }
 
 const getWeatherForecastCurrentLocation = async () => {
-  console.log('FETCHING getWeatherForecastCurrentLocation', 'key', config.IP_GEOLOCATION);
   const location = await fetch(`https://api.ipgeolocation.io/ipgeo?apiKey=${config.IP_GEOLOCATION}`)
     .then(res => res.json());
   const lat = await location.latitude;
   const long = await location.longitude;
-  console.log('ADDRESS DATA:', 'lat', lat, 'long', long);
-  const weather = await fetch(`https://api.darksky.net/forecast/${config.IP_DARK_SKY}/${lat},${long}?extend=hourly&exclude=currently,minutely,alerts,flags`, {
-    mode: 'cors'
-  })
-    .then(res => res.json());
-  console.log('WEATHER', weather);
+  const weather = await fetch(`https://cors-anywhere.herokuapp.com/https://api.darksky.net/forecast/${config.IP_DARK_SKY}/${lat},${long}?extend=hourly&exclude=currently,minutely,alerts,flags`)
+    .then(res => res.text())
+  const weatherObj = await JSON.parse(weather);
+  const trimmedWeatherObj = await TrimWeatherData(weatherObj);
+  return trimmedWeatherObj;
 }
 
 const getWeatherForecastNewLocation = (address) => {

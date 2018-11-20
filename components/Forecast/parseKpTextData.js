@@ -62,5 +62,7 @@ const ParseKpTextData = (text) => {
 
 export default ParseKpTextData;
 
+// almost all of the code in here was borrowed from https://github.com/evanchiu/aurora-api/blob/master/src/parse.js
+
 
 

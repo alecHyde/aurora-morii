@@ -12,10 +12,9 @@ class AuroraForecast extends React.Component {
   static async getInitialProps() {
     const kpForecast = await API.getKpForecast();
     const weatherAndLocation = await API.getWeatherForecastCurrentLocation();
-    console.log('DATA FETCHED kpForecast: \n', kpForecast);
-    console.log('DATA FETCHED weatherAndLocation \n', weatherAndLocation);
     return {
-      kpForecastData: kpForecast
+      kpForecastData: kpForecast,
+      weatherAndLocationData: weatherAndLocation
     }
   }
 
