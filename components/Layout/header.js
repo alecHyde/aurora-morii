@@ -9,8 +9,8 @@ const headerStyle = {
 }
 
 const Header = () => (
-  <div style={headerStyle}>
-    
+  <div>
+ 
     <Link href="/">
       <button>Home</button>
     </Link>
@@ -27,7 +27,7 @@ const Header = () => (
       <button>FAQ</button>
     </Link>
 
-    <style global jsx>{`
+    <style jsx>{`
       button {
         display: inline flex;
         flex-direction: row;
@@ -44,6 +44,14 @@ const Header = () => (
       }
       button:hover {
         background: #89ff77;
+      }
+      div {
+        display: flex;
+        justify-content: space-evenly;
+        flex-wrap: wrap;
+        border: 5px solid #7751a9;
+        background: #032e3e;
+
       }
     `}</style>
     
