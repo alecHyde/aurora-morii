@@ -1,14 +1,13 @@
 import config from '../../config';
 import fetch from 'isomorphic-unfetch';
 
-import ParseKpTextData from './parseKpTextData';
-import TrimWeatherData from './trimWeatherData';
-// import corsURL from './CORSProxy';
+import modifyData from './APIDataModifiers';
+
 
 const getKpForecast = async () => {
   const kpTextData = await fetch('http://services.swpc.noaa.gov/text/3-day-forecast.txt')
     .then(res => res.text());
-  const formattedKpData = await ParseKpTextData(kpTextData);
+  const formattedKpData = await modifyData.ParseKpTextData(kpTextData);
   return formattedKpData;
 }
 
@@ -17,45 +16,86 @@ const getWeatherForecastCurrentLocation = async () => {
     .then(res => res.json());
   const lat = await location.latitude;
   const long = await location.longitude;
+  const city = await location.city;
+  // https://cors-anywhere.herokuapp.com/ is a workaround for CORS authentication. In production, all of this code would be 
+  // behind a proxy server, and I would add CORS credentials from an express server to prevent exposing API keys. All of the 
+  // API keys I am using are free accounts, with limits that reset every day or week, so I am not too concerned in this usecase.
   const weather = await fetch(`https://cors-anywhere.herokuapp.com/https://api.darksky.net/forecast/${config.IP_DARK_SKY}/${lat},${long}?extend=hourly&exclude=currently,minutely,alerts,flags`)
     .then(res => res.text())
   const weatherObj = await JSON.parse(weather);
-  const trimmedWeatherObj = await TrimWeatherData(weatherObj);
+  // console.log('WEATHER', weatherObj);
+  const trimmedWeatherObj = await modifyData.TrimWeatherData(weatherObj, city);
   return trimmedWeatherObj;
 }
 
-const getWeatherForecastNewLocation = (address) => {
-  console.log('FETCHING getWeatherForecastNewLocation');
+// FUTURE PLANS
+// const getWeatherForecastNewLocation = (address) => {
+//   console.log('FETCHING getWeatherForecastNewLocation');
+// }
+
+
+const combineDataObj = (kpForecast, cloudForecast) => {
+  combineHourlyDataObj(kpForecast, cloudForecast)
+  return combineDailyDataObj(kpForecast, cloudForecast)
+}
+
+const combineHourlyDataObj = (kpForecast, cloudForecast) => {
+  kpForecast.coordinates = cloudForecast.coordinates;
+  kpForecast.city = cloudForecast.city;
+  
+  let hourlyDataObj = {};
+  kpForecast.breakdown.forEach(item => {
+    hourlyDataObj[item.compare] = item;
+  });
+
+  kpForecast.hourlyDataObj = hourlyDataObj;
+  // console.log('kpForecast one', kpForecast);
+  cloudForecast.hourly.forEach(item => {
+    if(kpForecast.hourlyDataObj[item.compare]) {
+      kpForecast.hourlyDataObj[item.compare].cloudCover = item.cloudCover;
+    }
+  });
+ 
+}
+
+const combineDailyDataObj = (kpForecast, cloudForecast) => {
+  let dailyDataObj = {};
+  kpForecast.breakdown.forEach(item => {
+    if(!dailyDataObj[item.day]) {
+      dailyDataObj[item.day] = [ item ];
+    } else {
+      dailyDataObj[item.day].push(item);
+    }
+  });
+
+  kpForecast.dailyDataObj = dailyDataObj;
+  // console.log('kpForecast THIRD', kpForecast);
+  cloudForecast.daily.forEach(item => {
+    if(kpForecast.dailyDataObj[item.day]) {
+      let arr = kpForecast.dailyDataObj[item.day];
+      arr.sort((a, b) => a.timeNum - b.timeNum);
+      let moon = item.moonPhase;
+      arr.forEach(obj => obj.moonPhase = moon);
+    }
+  });
+
+  let kpDailyForecastArray = [];
+  for(let i in kpForecast.dailyDataObj) {
+    kpDailyForecastArray.push(kpForecast.dailyDataObj[i]);
+  }
+  
+  kpDailyForecastArray.sort((a, b) => {
+    let aDate = new Date(a[0].start);
+    let bDate = new Date(b[0].start);
+    return aDate - bDate
+  });
+  
+  kpForecast.dailyForecastArray = kpDailyForecastArray;
+  return kpForecast
 }
 
 
+export default { getKpForecast, getWeatherForecastCurrentLocation, combineDataObj };
 
 
 
-
-export default {getKpForecast, getWeatherForecastCurrentLocation, getWeatherForecastNewLocation};
-
-
-//   static async getInitialProps({ req }) {
-//     const userAgent = req ? req.headers['user-agent'] : navigator.userAgent
-//     return { userAgent }
-//   }
-
-
-//   Page.getInitialProps = async ({ req }) => {
-//   const res = await fetch('https://api.github.com/repos/zeit/next.js')
-//   const json = await res.json()
-//   return { stars: json.stargazers_count }
-// }
-
-
-// Index.getInitialProps = async function() {
-//   const res = await fetch('https://api.tvmaze.com/search/shows?q=batman')
-//   const data = await res.json()
-
-//   console.log(`Show data fetched. Count: ${data.length}`)
-
-//   return {
-//     shows: data
-//   }
-// }
